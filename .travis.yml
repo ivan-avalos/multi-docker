@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t avalos/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true avalos/react-test npm test
+
+after_success:
+  # Just build those images
+  - docker build -t avalos/multi-client ./client
+  - docker build -t avalos/multi-nginx ./nginx
+  - docker build -t avalos/multi-server ./server
+  - docker build -t avalos/multi-worker ./worker
+  # Take those images to DockerHub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push avalos/multi-client
+  - docker push avalos/multi-nginx
+  - docker push avalos/multi-server
+  - docker push avalos/multi-worker
